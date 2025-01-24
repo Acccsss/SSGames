@@ -1,0 +1,4 @@
+id,user,password,email,role,balance
+1,1,1,da@gmal.com,root,5
+2,2,2,1,user,5
+3,5,5,5,user,5

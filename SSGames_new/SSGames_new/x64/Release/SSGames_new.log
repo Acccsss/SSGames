@@ -1,0 +1,18 @@
+﻿  main.cxx
+C:\Users\Float\source\repos\SSGames_new\SSGames_new\render.h(190,23): warning C4244: инициализация: преобразование "double" в "float", возможна потеря данных
+  (компиляция исходного файла "main.cxx")
+  
+C:\Users\Float\source\repos\SSGames_new\SSGames_new\render.h(200,74): warning C4244: =: преобразование "double" в "float", возможна потеря данных
+  (компиляция исходного файла "main.cxx")
+  
+C:\Users\Float\source\repos\SSGames_new\SSGames_new\render.hxx(1797,91): warning C4244: аргумент: преобразование "float" в "ImGuiSliderFlags", возможна потеря данных
+  (компиляция исходного файла "main.cxx")
+  
+  Создание кода
+  0 of 3773 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  Создание кода завершено
+  SSGames_new.vcxproj -> C:\Users\Float\source\repos\SSGames_new\x64\Release\SSGames_new.exe
+  "pwsh.exe" не является внутренней или внешней
+  командой, исполняемой программой или пакетным файлом.
