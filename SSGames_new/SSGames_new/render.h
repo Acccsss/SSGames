@@ -4,7 +4,7 @@
 
 namespace menufunctional
 {
-
+    static std::string role;
     namespace deletefunc
     {
         static bool open = false;
@@ -51,6 +51,7 @@ namespace menufunctional
     
     namespace login {
         std::string currentUser;
+        static bool islogining = false;
     }
 
     namespace editcolormenu {

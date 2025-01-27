@@ -1,5 +1,6 @@
 #include <iostream>
 #include<fstream>
+#include<filesystem>
 #include <sstream>
 #include<string>
 #include"render.h"
@@ -181,14 +182,16 @@ void PurchaseGames(Cart& cart, const std::string& username) {
 void DisplayPurchasedGames(const std::string& username) {
     std::ifstream libraryFile(username + "_library.csv");
     if (!libraryFile.is_open()) {
-        ImGui::Begin("Library");
-        ImGui::Text( "No games purchased yet.");
+        ImGui::SetNextWindowSize(ImVec2(400, 200));
+        ImGui::Begin(menufunctional::settings::language == 0 ? "Library" : U8(u8"Библиотека"));
+        ImGui::Text(menufunctional::settings::language == 0 ? "No games purchased yet.": U8(u8"Игры еще не куплены."));
         ImGui::End();
         return;
     }
-
-    ImGui::Begin("Purchased Games");
-    ImGui::Text("Purchased games:");
+   // ImGui::SetNextWindowSize(ImVec2(400, 300));
+    ImGui::SetNextWindowSize(ImVec2(400, 200));
+    ImGui::Begin(menufunctional::settings::language == 0 ? "Purchased Games":U8(u8"Приобретенные игры"));
+    ImGui::Text(menufunctional::settings::language == 0 ? "Purchased games:":U8(u8"Приобретенные игры:"));
 
     std::string line;
     std::string gamesList;
@@ -223,12 +226,12 @@ void DisplayUserBalance(const std::string& username) {
         });
 
     if (userIt == users.end()) {
-        ImGui::Text("User not found!");
+        ImGui::Text(menufunctional::settings::language == 0 ? "User not found!" :U8(u8"Пользователь не найден!"));
         return;
     }
 
     // Отображаем баланс пользователя через ImGui
-    ImGui::Text("Your current balance: $%.2f", userIt->balance);
+    ImGui::Text(menufunctional::settings::language == 0 ? "Your current balance: $%.2f" :U8(u8"Ваш текущий баланс: $%.2f"), userIt->balance);
 }
 
 
@@ -257,23 +260,49 @@ std::vector<Game> ReadGames() {
     }
     return games;
 }
-
-void DisplayGameStore(Cart& cart) {
+static bool buttonpress = false;
+void DisplayGameStore(Cart& cart, ImFont* icons_font) {
     // Читаем данные из файла
     std::vector<Game> games = ReadGames();
     static bool library_on = false;
-    ImGui::Begin("Game Store");
+    //ImGui::SetNextWindowSize(ImVec2(1200,500));
+    ImGui::Begin(menufunctional::settings::language == 0 ? "Game Store": U8(u8"Игровой магазин"));
+    if (menufunctional::role == "user")
+    {
+        ImGui::PushFont(icons_font);
+        if (ImGui::Button(ICON_FA_XMARK))
+            menufunctional::menu_main_button::closemenu = true;
+        ImGui::PopFont();
+
+        if (ImGui::Button(menufunctional::settings::language == 0 ? "Log out account" : U8(u8"Выйти из аккаунта")))
+            menufunctional::login::islogining = false;
+        ImGui::PushFont(icons_font);
+        if(ImGui::Button(ICON_FA_GEAR))
+        menufunctional::settings::open = !menufunctional::settings::open;
+
+        if(menufunctional::settings::open)
+        Setting(icons_font);
+
+        ImGui::PopFont();
+    }
+    if (menufunctional::role != "user")
+    {
+        ImGui::PushFont(icons_font);
+        if (ImGui::Button(ICON_FA_XMARK))
+            buttonpress = false;
+        ImGui::PopFont();
+    }
     DisplayUserBalance(menufunctional::login::currentUser);
         // Отображаем данные в таблице
-        if (ImGui::BeginTable("GameTable", 7, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable)) {
+        if (ImGui::BeginTable(menufunctional::settings::language == 0 ? "GameTable" : U8(u8"Игровой стол") , 7, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable)) {
             // Заголовки таблицы
-            ImGui::TableSetupColumn("ID");
-            ImGui::TableSetupColumn("Name");
-            ImGui::TableSetupColumn("Release Date");
-            ImGui::TableSetupColumn("Genre");
-            ImGui::TableSetupColumn("Sold Copies");
-            ImGui::TableSetupColumn("Price");
-            ImGui::TableSetupColumn("Action");
+            ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "ID": U8(u8"ИН"));
+            ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Name": U8(u8"Имя"));
+            ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Release Date": U8(u8"Дата выхода"));
+            ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Genre":U8(u8"Жанр"));
+            ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Sold Copies": U8(u8"Проданные экземпляры"));
+            ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Price": U8(u8"Цена"));
+            ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Action": U8(u8"Действие"));
             ImGui::TableHeadersRow();
 
             // Заполняем строки таблицы
@@ -300,19 +329,19 @@ void DisplayGameStore(Cart& cart) {
 
                 ImGui::TableSetColumnIndex(6);
                 if (game.sold_copies > 0) { // Проверяем, что количество копий больше нуля
-                    if (ImGui::Button(("Add to Cart##" + std::to_string(game.id)).c_str())) {
+                    if (ImGui::Button((menufunctional::settings::language == 0 ? "Add to Cart##" : U8(u8"Добавить в корзину") + std::to_string(game.id)).c_str())) {
                         cart.AddToCart(game);
                     }
                 }
                 else {
-                    ImGui::Text("Out of stock"); // Или другой текст для недоступных игр
+                    ImGui::Text(menufunctional::settings::language == 0 ? "Out of stock" : U8(u8"Нет в наличии")); // Или другой текст для недоступных игр
                 }
 
             }
 
             ImGui::EndTable();
         }
-        if (ImGui::Button("Library"))
+        if (ImGui::Button(menufunctional::settings::language == 0 ? "Library" : U8(u8"Библиотека")))
             library_on = !library_on;
 
         if (library_on)
@@ -321,7 +350,7 @@ void DisplayGameStore(Cart& cart) {
         ImGui::Separator();
 
         // Кнопка для перехода в корзину
-        if (ImGui::Button("View Cart")) {
+        if (ImGui::Button(menufunctional::settings::language == 0 ? "View Cart": U8(u8"Просмотр корзины"))) {
             // Переход в интерфейс корзины
             cart.SetViewingCart(true);
         }
@@ -332,20 +361,20 @@ void DisplayGameStore(Cart& cart) {
 
 
 void DisplayCartInterface(Cart& cart, const std::string& username) {
-    ImGui::Begin("Shopping Cart");
+    ImGui::Begin(menufunctional::settings::language == 0 ? "Shopping Cart" : U8(u8"Корзина покупок"));
 
     if (cart.items.empty()) {
-        ImGui::Text("Your cart is empty.");
+        ImGui::Text(menufunctional::settings::language == 0 ? "Your cart is empty." :U8(u8"Ваша корзина пуста."));
     }
     else {
-        ImGui::Text("Games in your cart:");
+        ImGui::Text(menufunctional::settings::language == 0 ? "Games in your cart:" : U8(u8"Игры в вашей корзине:"));
         ImGui::Separator();
 
         if (ImGui::BeginTable("CartTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
-            ImGui::TableSetupColumn("ID");
-            ImGui::TableSetupColumn("Name");
-            ImGui::TableSetupColumn("Price");
-            ImGui::TableSetupColumn("Action");
+            ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "ID" : U8(u8"ИН"));
+            ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Name" : U8(u8"Имя"));
+            ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Price" : U8(u8"Цена"));
+            ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Action" : U8(u8"Действие"));
             ImGui::TableHeadersRow();
 
             for (size_t i = 0; i < cart.items.size(); ++i) {
@@ -363,7 +392,7 @@ void DisplayCartInterface(Cart& cart, const std::string& username) {
                 ImGui::Text("$%.2f", game.price);
 
                 ImGui::TableSetColumnIndex(3);
-                if (ImGui::Button(("Remove##" + std::to_string(i)).c_str())) {
+                if (ImGui::Button((menufunctional::settings::language == 0 ? "Remove##" : U8(u8"Удалить##") + std::to_string(i)).c_str())) {
                     cart.RemoveFromCart(game.id);
                 }
             }
@@ -372,23 +401,23 @@ void DisplayCartInterface(Cart& cart, const std::string& username) {
         }
 
         ImGui::Separator();
-        ImGui::Text("Total items: %d", static_cast<int>(cart.items.size()));
+        ImGui::Text(menufunctional::settings::language == 0 ? "Total items: %d": U8(u8"Общее количество товаров: %d"), static_cast<int>(cart.items.size()));
         float totalPrice = 0.0f;
         for (const auto& game : cart.items) {
             totalPrice += game.price;
         }
-        ImGui::Text("Total price: $%.2f", totalPrice);
+        ImGui::Text(menufunctional::settings::language == 0 ? "Total price: $%.2f": U8(u8"Итоговая цена: $%.2f"), totalPrice);
 
-        if (ImGui::Button("Purchase")) {
+        if (ImGui::Button(menufunctional::settings::language == 0 ? "Purchase": U8(u8"Покупка"))) {
             PurchaseGames(cart, username);
             cart.items.clear();
-            ImGui::Text("Purchase completed successfully!");
+            ImGui::Text(menufunctional::settings::language == 0 ? "Purchase completed successfully!": U8(u8"Покупка успешно завершена!"));
         }
     }
 
     ImGui::Separator();
 
-    if (ImGui::Button("Back to Store")) {
+    if (ImGui::Button(menufunctional::settings::language == 0 ? "Back to Store": U8(u8"Вернуться в магазин"))) {
         cart.SetViewingCart(false);
     }
 
@@ -668,23 +697,29 @@ std::string GetCreationDate(int id, const std::unordered_map<int, std::string>& 
 
 
 // Вызов и отображение информации
-void SysCheckDate() {
+void SysCheckDate(ImFont* icons_font) {
     static int id_to_check = 0;
     static std::string creation_date;
+    static bool CloseCheckDate = false;
+    ImGui::Checkbox(menufunctional::settings::language == 0 ? "Check Date" : U8(u8"Проверка даты"),&CloseCheckDate);
+    if (CloseCheckDate) {
+        ImGui::Begin(menufunctional::settings::language == 0 ? "Check Creation Date" : U8(u8"Проверка даты создания"));
+        ImGui::PushFont(icons_font);
+        if (ImGui::Button(ICON_FA_XMARK))
+            CloseCheckDate = false;
+        ImGui::PopFont();
+        ImGui::InputInt(menufunctional::settings::language == 0 ? "Enter ID" : U8(u8"Введите ИН"), &id_to_check);
 
-    ImGui::Begin("Check Creation Date");
+        if (ImGui::Button(menufunctional::settings::language == 0 ? "Check Date" : U8(u8"Дата проверки"))) {
+            // Загружаем данные и ищем дату
+            auto creation_dates = LoadCreationDates("date.csv");
+            creation_date = GetCreationDate(id_to_check, creation_dates);
+        }
 
-    ImGui::InputInt("Enter ID", &id_to_check);
+        ImGui::Text(menufunctional::settings::language == 0 ? "Creation Date: %s" : U8(u8"Дата создания: %s"), creation_date.c_str());
 
-    if (ImGui::Button("Check Date")) {
-        // Загружаем данные и ищем дату
-        auto creation_dates = LoadCreationDates("date.csv");
-        creation_date = GetCreationDate(id_to_check, creation_dates);
+        ImGui::End();
     }
-
-    ImGui::Text("Creation Date: %s", creation_date.c_str());
-
-    ImGui::End();
 }
 
 
@@ -837,37 +872,42 @@ std::string GetUserRole(const std::string& username) {
 
 
 
-static std::string role;
-static bool islogining = false;
 
-void RenderLoginUI(bool& showRegistration) {
+
+
+void RenderLoginUI(bool& showRegistration,ImFont* icons_font) {
     static char loginUsername[128] = "";
     static char loginPassword[128] = "";
     static std::string message;
 
   //  ImGui::Begin("Login");
+    ImGui::SetCursorPos(ImVec2(370,25));
+    ImGui::PushFont(icons_font);
+    if(ImGui::Button(ICON_FA_XMARK))
+        menufunctional::menu_main_button::closemenu = true;
+    ImGui::PopFont();
 
-    ImGui::Text("Login:");
-    ImGui::InputText("Username", loginUsername, sizeof(loginUsername));
-    ImGui::InputText("Password", loginPassword, sizeof(loginPassword), ImGuiInputTextFlags_Password);
+    ImGui::Text(menufunctional::settings::language == 0 ? "Login:" : U8(u8"Авторизоваться:"));
+    ImGui::InputText(menufunctional::settings::language == 0 ? "Username":U8(u8"Имя пользователя"), loginUsername, sizeof(loginUsername));
+    ImGui::InputText(menufunctional::settings::language == 0 ? "Password":U8(u8"Пароль"), loginPassword, sizeof(loginPassword), ImGuiInputTextFlags_Password);
 
-    if (ImGui::Button("Login")) {
+    if (ImGui::Button(menufunctional::settings::language == 0 ? "Login":U8(u8"Авторизоваться"))) {
         if (ValidateLogin(loginUsername, loginPassword)) {
-            role = GetUserRole(loginUsername);
-            message = "Login successful! Role: " + role;
+            menufunctional::role = GetUserRole(loginUsername);
+            message = menufunctional::settings::language == 0 ? "Login successful! Role: ":U8(u8"Вход в систему прошел успешно! Роль:") + menufunctional::role;
             menufunctional::login::currentUser = loginUsername;
-            islogining = true;
+            menufunctional::login::islogining = true;
         }
         else {
-            message = "Invalid username or password.";
+            message = menufunctional::settings::language == 0 ? "Invalid username or password.":U8(u8"Неверное имя пользователя или пароль");
         }
     }
 
     ImGui::Text("%s", message.c_str());
 
     ImGui::Separator();
-    ImGui::Text("Not registered yet?");
-    if (ImGui::Button("Register here")) {
+    ImGui::Text(menufunctional::settings::language == 0 ? "Not registered yet?":U8(u8"Еще не зарегистрировались?"));
+    if (ImGui::Button(menufunctional::settings::language == 0 ? "Register here":U8(u8"Зарегистрируйтесь здесь"))) {
         showRegistration = true;
     }
 
@@ -883,35 +923,35 @@ void RenderRegistrationUI(bool& showRegistration) {
 
     //ImGui::Begin("Registration");
 
-    ImGui::Text("Register:");
-    ImGui::InputText("Username", username, sizeof(username));
-    ImGui::InputText("Password", password, sizeof(password), ImGuiInputTextFlags_Password);
-    ImGui::InputText("Email", email, sizeof(email));
+    ImGui::Text(menufunctional::settings::language == 0 ? "Register:" : U8(u8"Зарегистрироваться:"));
+    ImGui::InputText(menufunctional::settings::language == 0 ? "Username" : U8(u8"Имя пользователя"), username, sizeof(username));
+    ImGui::InputText(menufunctional::settings::language == 0 ? "Password" : U8(u8"Пароль"), password, sizeof(password), ImGuiInputTextFlags_Password);
+    ImGui::InputText(menufunctional::settings::language == 0 ? "Email" : U8(u8"Электронная почта"), email, sizeof(email));
 
-    if (ImGui::Button("Register")) {
+    if (ImGui::Button(menufunctional::settings::language == 0 ? "Register" : U8(u8"Зарегистрировать"))) {
         std::string user(username);
         std::string pass(password);
         std::string mail(email);
 
         if (user.empty() || pass.empty() || mail.empty()) {
-            message = "All fields are required!";
+            message = menufunctional::settings::language == 0 ? "All fields are required!" : U8(u8"Все поля обязательны для заполнения!");
         }
         else if (!IsValidEmail(mail)) {
-            message = "Invalid email format!";
+            message = menufunctional::settings::language == 0 ? "Invalid email format!" : U8(u8"Недопустимый формат электронной почты!");
         }
         else if (IsUserOrEmailExists(user, mail)) {
-            message = "Username or email already exists!";
+            message = menufunctional::settings::language == 0 ? "Username or email already exists!" : U8(u8"Имя пользователя или адрес электронной почты уже существуют!");
         }
         else {
             SaveUserData(user, pass, mail);
-            message = "Registration successful!";
+            message = menufunctional::settings::language == 0 ? "Registration successful!": U8(u8"Регистрация прошла успешно!");
             showRegistration = false;
         }
     }
 
     ImGui::Text("%s", message.c_str());
 
-    if (ImGui::Button("Back to Login")) {
+    if (ImGui::Button(menufunctional::settings::language == 0 ? "Back to Login" : U8(u8"Вернуться к входу"))) {
         showRegistration = false;
     }
 
@@ -973,61 +1013,69 @@ bool ChangeUserRole(const std::string& username, const std::string& newRole) {
 }
 
 
-void RenderAdminUI() {
+void RenderAdminUI(ImFont* icons_font) {
     static char username[128] = "";
     static std::string message;
 
     // Индекс роли по умолчанию (0 - "user", 1 - "developer")
     static int selectedRoleIndex = 0;
-
+    static bool changerole = false;
     // Доступные роли
     const char* roles[] = { "user", "root" };
-    ImGui::Begin("Role");
-    ImGui::Text("Admin Panel: Change User Role");
+    ImGui::Checkbox(menufunctional::settings::language == 0 ? "Change Role" : U8(u8"Изменить роль"),&changerole);
+    if (changerole) {
+        ImGui::Begin(menufunctional::settings::language == 0 ? "Role" : U8(u8"Роль"));
+        ImGui::PushFont(icons_font);
+        if (ImGui::Button(ICON_FA_XMARK))
+            changerole = false;
+        ImGui::PopFont();
+        ImGui::Text(menufunctional::settings::language == 0 ? "Change User Role" : U8(u8"Изменение роли пользователя"));
 
-    // Ввод имени пользователя
-    ImGui::InputText("Username", username, sizeof(username));
+        // Ввод имени пользователя
+        ImGui::InputText(menufunctional::settings::language == 0 ? "Username" : U8(u8"Имя пользователя"), username, sizeof(username));
 
-    // Выпадающий список для выбора роли
-    ImGui::Combo("Role", &selectedRoleIndex, roles, IM_ARRAYSIZE(roles));
+        // Выпадающий список для выбора роли
+        ImGui::Combo("Role", &selectedRoleIndex, roles, IM_ARRAYSIZE(roles));
 
-    // Кнопка для изменения роли
-    if (ImGui::Button("Change Role")) {
-        std::string user(username);
-        std::string role(roles[selectedRoleIndex]); // Получение роли по индексу
+        // Кнопка для изменения роли
+        if (ImGui::Button(menufunctional::settings::language == 0 ? "Change Role" : U8(u8"Изменить роль"))) {
+            std::string user(username);
+            std::string role(roles[selectedRoleIndex]); // Получение роли по индексу
 
-        if (user.empty()) {
-            message = "Username is required!";
-        }
-        else {
-            // Изменение роли через ChangeUserRole
-            bool success = ChangeUserRole(user, role);
-            if (success) {
-                message = "Role updated successfully!";
+            if (user.empty()) {
+                message = menufunctional::settings::language == 0 ? "Username is required!" : U8(u8"Требуется имя пользователя!");
             }
             else {
-                message = "Failed to update role. User not found.";
+                // Изменение роли через ChangeUserRole
+                bool success = ChangeUserRole(user, role);
+                if (success) {
+                    message = menufunctional::settings::language == 0 ? "Role updated successfully!" : U8(u8"Роль успешно обновлена!");
+                }
+                else {
+                    message = menufunctional::settings::language == 0 ? "Failed to update role. User not found." : U8(u8"Не удалось обновить роль. Пользователь не найден.");
+                }
             }
         }
+
+        // Отображение сообщения
+        ImGui::Text("%s", message.c_str());
+
+        ImGui::End();
     }
-
-    // Отображение сообщения
-    ImGui::Text("%s", message.c_str());
-
-    ImGui::End();
 }
 
 
 
-void SysPanelRegistrator()
+void SysPanelRegistrator(ImFont* icons_font)
 {
     static bool showRegistration = false;
+    ImGui::SetNextWindowSize(ImVec2(400,300));
     ImGui::Begin("SSGAMES");
     if (showRegistration) {
         RenderRegistrationUI(showRegistration);
     }
     else {
-        RenderLoginUI(showRegistration);
+        RenderLoginUI(showRegistration,icons_font);
     }
 
     ImGui::End();
@@ -1223,47 +1271,53 @@ bool AddUser(const std::string& username, const std::string& password, const std
     return true;
 }
 
-void AddUserUI() {
+void AddUserUI(ImFont* icons_font) {
     static char username[128] = "";
     static char password[128] = "";
     static char email[128] = "";
     static char role[64] = "";
     static std::string message;
+    static bool CloseAddUserWindow = false;
+    ImGui::Checkbox(menufunctional::settings::language == 0 ? "Add User" : U8(u8"Добавить пользователя"),&CloseAddUserWindow);
+    if (CloseAddUserWindow) {
+        ImGui::Begin(menufunctional::settings::language == 0 ? "Add New User" : U8(u8"Добавить нового пользователя"));
+        ImGui::PushFont(icons_font);
+        if (ImGui::Button(ICON_FA_XMARK))
+            CloseAddUserWindow = false;
+        ImGui::PopFont();
+        ImGui::Text(menufunctional::settings::language == 0 ? "Enter new user details:" : U8(u8"Введите новые данные пользователя:"));
+        ImGui::InputText(menufunctional::settings::language == 0 ? "Username" : U8(u8"Имя пользователя"), username, sizeof(username));
+        ImGui::InputText(menufunctional::settings::language == 0 ? "Password" : U8(u8"Пароль"), password, sizeof(password));
+        ImGui::InputText(menufunctional::settings::language == 0 ? "Email" : U8(u8"Электронная почта"), email, sizeof(email));
+        ImGui::InputText(menufunctional::settings::language == 0 ? "Role" : U8(u8"Роль"), role, sizeof(role));
 
-    ImGui::Begin("Add New User");
-
-    ImGui::Text("Enter new user details:");
-    ImGui::InputText("Username", username, sizeof(username));
-    ImGui::InputText("Password", password, sizeof(password));
-    ImGui::InputText("Email", email, sizeof(email));
-    ImGui::InputText("Role", role, sizeof(role));
-
-    if (ImGui::Button("Add User")) {
-        // Проверяем, что все поля заполнены
-        if (std::strlen(username) == 0 || std::strlen(password) == 0 || std::strlen(email) == 0 || std::strlen(role) == 0) {
-            message = "Error: All fields are required!";
-        }
-        else {
-            if (AddUser(username, password, email, role)) {
-                message = "User added successfully!";
-                // Очищаем поля после успешного добавления
-                std::memset(username, 0, sizeof(username));
-                std::memset(password, 0, sizeof(password));
-                std::memset(email, 0, sizeof(email));
-                std::memset(role, 0, sizeof(role));
+        if (ImGui::Button(menufunctional::settings::language == 0 ? "Add User" : U8(u8"Добавить пользователя"))) {
+            // Проверяем, что все поля заполнены
+            if (std::strlen(username) == 0 || std::strlen(password) == 0 || std::strlen(email) == 0 || std::strlen(role) == 0) {
+                message = menufunctional::settings::language == 0 ? "Error: All fields are required!" : U8(u8"Ошибка: Все поля обязательны для заполнения!");
             }
             else {
-                message = "Error: Username or email already exists.";
+                if (AddUser(username, password, email, role)) {
+                    message = menufunctional::settings::language == 0 ? "User added successfully!" : U8(u8"Пользователь успешно добавлен!");
+                    // Очищаем поля после успешного добавления
+                    std::memset(username, 0, sizeof(username));
+                    std::memset(password, 0, sizeof(password));
+                    std::memset(email, 0, sizeof(email));
+                    std::memset(role, 0, sizeof(role));
+                }
+                else {
+                    message = menufunctional::settings::language == 0 ? "Error: Username or email already exists." : U8(u8"Ошибка: Имя пользователя или адрес электронной почты уже существуют.");
+                }
             }
         }
-    }
 
-    // Вывод сообщения
-    if (!message.empty()) {
-        ImGui::Text("%s", message.c_str());
-    }
+        // Вывод сообщения
+        if (!message.empty()) {
+            ImGui::Text("%s", message.c_str());
+        }
 
-    ImGui::End();
+        ImGui::End();
+    }
 }
 
 
@@ -1302,7 +1356,7 @@ bool UpdateUser(int id, const std::string& username, const std::string& password
 
 
 // Функция для отображения UI в ImGui
-void UserManagementUI() {
+void UserManagementUI(ImFont* icons_font) {
     static char inputId[10] = "";
     static char username[128] = "";
     static char password[128] = "";
@@ -1311,72 +1365,78 @@ void UserManagementUI() {
     static float balance = 0;
     static std::string message; // Сообщение об ошибке или успехе
     static int action = 0; // 0 - ничего, 1 - удалить, 2 - обновить
+    static bool UserManagement = false;
+    ImGui::Checkbox(menufunctional::settings::language == 0 ? "User Management" : U8(u8"Управление пользователями"),&UserManagement);
+    if (UserManagement) {
+        ImGui::Begin(menufunctional::settings::language == 0 ? "User Management" : U8(u8"Управление пользователями"));
+        ImGui::PushFont(icons_font);
+        if (ImGui::Button(ICON_FA_XMARK))
+            UserManagement = false;
+        ImGui::PopFont();
+        ImGui::Text(menufunctional::settings::language == 0 ? "Enter User ID:" : U8(u8"Введите идентификатор пользователя:"));
+        ImGui::InputText(menufunctional::settings::language == 0 ? "ID" : U8(u8"ИН"), inputId, sizeof(inputId));
 
-    ImGui::Begin("User Management");
+        ImGui::Separator();
 
-    ImGui::Text("Enter User ID:");
-    ImGui::InputText("ID", inputId, sizeof(inputId));
-
-    ImGui::Separator();
-
-    if (ImGui::RadioButton("Delete User", action == 1)) {
-        action = 1;
-    }
-    ImGui::SameLine();
-    if (ImGui::RadioButton("Update User", action == 2)) {
-        action = 2;
-    }
-
-    if (action == 2) {
-        // Поля для обновления пользователя
-        ImGui::InputText("New Username", username, sizeof(username));
-        ImGui::InputText("New Password", password, sizeof(password));
-        ImGui::InputText("New Email", email, sizeof(email));
-        ImGui::InputText("New Role", role, sizeof(role));
-        ImGui::InputFloat("Add money", &balance, sizeof(balance));
-    }
-
-    if (ImGui::Button("Continue")) {
-        int userId;
-        try {
-            userId = std::stoi(inputId);
+        if (ImGui::RadioButton(menufunctional::settings::language == 0 ? "Delete User" : U8(u8"Удалить пользователя"), action == 1)) {
+            action = 1;
         }
-        catch (...) {
-            message = "Invalid ID! Please enter a valid number.";
+        ImGui::SameLine();
+        if (ImGui::RadioButton(menufunctional::settings::language == 0 ? "Update User" : U8(u8"Обновить пользователя"), action == 2)) {
+            action = 2;
+        }
+
+        if (action == 2) {
+            // Поля для обновления пользователя
+            ImGui::InputText(menufunctional::settings::language == 0 ? "New Username" : U8(u8"Новое имя пользователя"), username, sizeof(username));
+            ImGui::InputText(menufunctional::settings::language == 0 ? "New Password" : U8(u8"Новый пароль"), password, sizeof(password));
+            ImGui::InputText(menufunctional::settings::language == 0 ? "New Email" : U8(u8"Новая электронная почта"), email, sizeof(email));
+            ImGui::InputText(menufunctional::settings::language == 0 ? "New Role" : U8(u8"Новая роль"), role, sizeof(role));
+            ImGui::InputFloat(menufunctional::settings::language == 0 ? "Add money" : U8(u8"Добавить деньги"), &balance, sizeof(balance));
+        }
+
+        if (ImGui::Button(menufunctional::settings::language == 0 ? "Continue" : U8(u8"Продолжить"))) {
+            int userId;
+            try {
+                userId = std::stoi(inputId);
+            }
+            catch (...) {
+                message = menufunctional::settings::language == 0 ? "Invalid ID! Please enter a valid number." : U8(u8"Неверный идентификатор! Пожалуйста, введите действительный номер.");
+                ImGui::Text("%s", message.c_str());
+                ImGui::End();
+                return;
+            }
+
+            if (action == 1) {
+                // Удаление пользователя
+                if (DeleteUser(userId)) {
+                    message = menufunctional::settings::language == 0 ? "User deleted successfully!" : U8(u8"Пользователь успешно удален!");
+                }
+                else {
+                    message = menufunctional::settings::language == 0 ? "Failed to delete user. User not found." : U8(u8"Не удалось удалить пользователя. Пользователь не найден.");
+                }
+            }
+            else if (action == 2) {
+                // Обновление пользователя
+                if (UpdateUser(userId, username, password, email, role, balance)) {
+                    message = menufunctional::settings::language == 0 ? "User updated successfully!" : U8(u8"Пользователь успешно обновился!");
+                }
+                else {
+                    message = menufunctional::settings::language == 0 ? "Failed to update user. User not found." : U8(u8"Не удалось обновить пользователя. Пользователь не найден.");
+                }
+            }
+            else {
+                message = menufunctional::settings::language == 0 ? "Please select an action." : U8(u8"Пожалуйста, выберите действие.");
+            }
+        }
+
+        // Отображение сообщения об ошибке или успехе
+        if (!message.empty()) {
             ImGui::Text("%s", message.c_str());
-            ImGui::End();
-            return;
         }
 
-        if (action == 1) {
-            // Удаление пользователя
-            if (DeleteUser(userId)) {
-                message = "User deleted successfully!";
-            }
-            else {
-                message = "Failed to delete user. User not found.";
-            }
-        }
-        else if (action == 2) {
-            // Обновление пользователя
-            if (UpdateUser(userId, username, password, email, role,balance)) {
-                message = "User updated successfully!";
-            }
-            else {
-                message = "Failed to update user. User not found.";
-            }
-        }
-        else {
-            message = "Please select an action.";
-        }
+        ImGui::End();
     }
-
-    // Отображение сообщения об ошибке или успехе
-    if (!message.empty()) {
-        ImGui::Text("%s", message.c_str());
-    }
-
-    ImGui::End();
 }
 
 
@@ -1387,12 +1447,12 @@ void DisplayUsersTable() {
     // Отображаем данные в таблице
     if (ImGui::BeginTable("UsersTable", 6, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable)) {
         // Заголовки таблицы
-        ImGui::TableSetupColumn("ID");
-        ImGui::TableSetupColumn("Username");
-        ImGui::TableSetupColumn("Password");
-        ImGui::TableSetupColumn("Email");
-        ImGui::TableSetupColumn("Role");
-        ImGui::TableSetupColumn("Balance");
+        ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "ID": U8(u8"ИН"));
+        ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Username":U8(u8"Имя пользователя"));
+        ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Password": U8(u8"Пароль"));
+        ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Email": U8(u8"Электронная почта"));
+        ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Role": U8(u8"Роль"));
+        ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Balance": U8(u8"Баланс"));
         ImGui::TableHeadersRow();
 
         // Заполняем строки таблицы
@@ -1435,12 +1495,12 @@ void DisplayTable() {
     // Отображаем данные в таблице
     if (ImGui::BeginTable("GameTable", 6, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable)) {
         // Заголовки таблицы
-        ImGui::TableSetupColumn("ID");
-        ImGui::TableSetupColumn("Name");
-        ImGui::TableSetupColumn("Release Date");
-        ImGui::TableSetupColumn("Genre");
-        ImGui::TableSetupColumn("Sold Copies");
-        ImGui::TableSetupColumn("Price");
+        ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "ID": U8(u8"ИН"));
+        ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Name": U8(u8"Имя"));
+        ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Release Date": U8(u8"Дата выхода"));
+        ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Genre": U8(u8"Жанр"));
+        ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Sold Copies": U8(u8"Проданные копии"));
+        ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Price": U8(u8"Цена"));
         ImGui::TableHeadersRow();
 
         // Заполняем строки таблицы
@@ -1485,13 +1545,13 @@ void SysAddGame()
    
 
         // Поля ввода
-        ImGui::InputText("Name", name, IM_ARRAYSIZE(name));
-        ImGui::InputText("Release Date", release_date, IM_ARRAYSIZE(release_date));
-        ImGui::InputText("Genre", genre, IM_ARRAYSIZE(genre));
-        ImGui::InputInt("Sold Copies", &sold_copies);
-        ImGui::InputFloat("Price", &price);
+        ImGui::InputText(menufunctional::settings::language == 0 ? "Name": U8(u8"Имя"), name, IM_ARRAYSIZE(name));
+        ImGui::InputText(menufunctional::settings::language == 0 ? "Release Date": U8(u8"Дата выхода"), release_date, IM_ARRAYSIZE(release_date));
+        ImGui::InputText(menufunctional::settings::language == 0 ? "Genre": U8(u8"Жанр"), genre, IM_ARRAYSIZE(genre));
+        ImGui::InputInt(menufunctional::settings::language == 0 ? "Sold Copies": U8(u8"Проданные экземпляры"), &sold_copies);
+        ImGui::InputFloat(menufunctional::settings::language == 0 ? "Price": U8(u8"Цена"), &price);
 
-        if (ImGui::Button("Add Game")) {
+        if (ImGui::Button(menufunctional::settings::language == 0 ? "Add Game": U8(u8"Добавить игру"))) {
             // Создать объект Game и добавить его
             Game game = { GetNextGameID(), name, release_date, genre, sold_copies, price };
             AddGame(game);
@@ -1503,7 +1563,7 @@ void SysAddGame()
             sold_copies = 0;
             price = 0.0f;
 
-            ImGui::Text("Game added successfully!");
+            ImGui::Text(menufunctional::settings::language == 0 ? "Game added successfully!": U8(u8"Игра успешно добавлена!"));
         }
 
       
@@ -1513,12 +1573,14 @@ void SysAddGame()
 Cart cart;
 bool viewingCart = false;
 
-void RenderUI(const std::string& username) {
-    if (!cart.IsViewingCart()) {
-        DisplayGameStore(cart); // Показываем магазин
-    }
-    else {
-        DisplayCartInterface(cart, username); // Показываем корзину
+void RenderUI(const std::string& username, ImFont* icons_font) {
+    if (menufunctional::login::islogining) {
+        if (!cart.IsViewingCart()) {
+            DisplayGameStore(cart, icons_font); // Показываем магазин
+        }
+        else {
+            DisplayCartInterface(cart, username); // Показываем корзину
+        }
     }
 }
 
@@ -1529,13 +1591,13 @@ void SysDeleteGame()
    // ImGui::Begin("Delete Game");
 
     // Поле для ввода ID игры
-    ImGui::InputInt("Game ID to delete", &game_id_to_delete);
+    ImGui::InputInt(menufunctional::settings::language == 0 ? "Game ID": U8(u8"Игровой ИН"), &game_id_to_delete);
 
-    if (ImGui::Button("Delete Game")) {
+    if (ImGui::Button(menufunctional::settings::language == 0 ? "Delete Game": U8(u8"Удалить игру"))) {
         // Вызов функции удаления
         DeleteGame(game_id_to_delete);
 
-        ImGui::Text("Game with ID %d deleted successfully (if it existed).", game_id_to_delete);
+        ImGui::Text(menufunctional::settings::language == 0 ? "Game with ID %d deleted successfully (if it existed).": U8(u8"Игра с идентификатором %d успешно удалена (если она существовала)."), game_id_to_delete);
 
         // Сбрасываем поле ввода
         game_id_to_delete = 0;
@@ -1544,9 +1606,60 @@ void SysDeleteGame()
   //  ImGui::End();
 }
 
-void SysRenameGame()
+// Экспорт пользователей
+void ExportUsersToCSV(const std::vector<User>& users, const std::string& folder) {
+    // Создаём папку, если её нет
+    std::filesystem::create_directories(folder);
+
+    std::string filepath = folder + "/exported_users.csv";
+    std::ofstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Error opening file for writing users!" << std::endl;
+        return;
+    }
+
+    // Записываем заголовки
+    file << "ID,Username,Password,Email,Role,Balance\n";
+
+    // Записываем данные пользователей
+    for (const auto& user : users) {
+        file << user.id << "," << user.username << "," << user.password << ","
+            << user.email << "," << user.role << "," << user.balance << "\n";
+    }
+
+    file.close();
+    std::cout << "Users exported successfully to " << filepath << "\n";
+}
+
+// Экспорт игр
+void ExportGamesToCSV(const std::vector<Game>& games, const std::string& folder) {
+    // Создаём папку, если её нет
+    std::filesystem::create_directories(folder);
+
+    std::string filepath = folder + "/exported_games.csv";
+    std::ofstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "Error opening file for writing games!" << std::endl;
+        return;
+    }
+
+    // Записываем заголовки
+    file << "ID,Name,Release Date,Genre,Sold Copies,Price\n";
+
+    // Записываем данные игр
+    for (const auto& game : games) {
+        file << game.id << "," << game.name << "," << game.release_date << ","
+            << game.genre << "," << game.sold_copies << "," << game.price << "\n";
+    }
+
+    file.close();
+    std::cout << "Games exported successfully to " << filepath << "\n";
+}
+
+
+void SysRenameGame(ImFont* icons_font)
 {
-    
+    static bool CloseRenameGame = false;
         static int game_id_to_rename = 0;         // Поле для ввода ID игры
         static int new_game_id = -1;             // Поле для ввода нового ID
         static char new_name[128] = "";          // Поле для нового имени
@@ -1555,75 +1668,82 @@ void SysRenameGame()
         static int new_sold_copies = -1;         // Поле для новых проданных копий
         static float new_price = -1.0f;          // Поле для новой цены
         static bool Change_id = false;
+        ImGui::Checkbox(menufunctional::settings::language == 0 ? "Rename Game" : U8(u8"Переименовать игру"), &CloseRenameGame);
 
-        ImGui::Begin("Rename Game");
+        if (CloseRenameGame) {
+            ImGui::SetNextWindowSize(ImVec2(650,300));
+            ImGui::Begin(menufunctional::settings::language == 0 ? "Rename Game" : U8(u8"Переименовать игру"));
+            ImGui::PushFont(icons_font);
+            if (ImGui::Button(ICON_FA_XMARK))
+                CloseRenameGame = false;
+            ImGui::PopFont();
+            ImGui::Text(menufunctional::settings::language == 0 ? "Edit Game Fields by ID" : U8(u8"Редактирование игровых полей по идентификатору"));
+            ImGui::Separator();
 
-        ImGui::Text("Edit Game Fields by ID");
-        ImGui::Separator();
+            // Поле для ввода текущего ID игры
+            ImGui::InputInt(menufunctional::settings::language == 0 ? "Current Game ID" : U8(u8"Текущий игровой ИН"), &game_id_to_rename);
 
-        // Поле для ввода текущего ID игры
-        ImGui::InputInt("Current Game ID", &game_id_to_rename);
-
-        // Поле для ввода нового ID игры
+            // Поле для ввода нового ID игры
 
 
 
-        // Поля для редактирования других данных
-        ImGui::InputText("New Name", new_name, IM_ARRAYSIZE(new_name));
-        ImGui::InputText("New Release Date", new_release_date, IM_ARRAYSIZE(new_release_date));
-        ImGui::InputText("New Genre", new_genre, IM_ARRAYSIZE(new_genre));
-        ImGui::InputInt("New Sold Copies", &new_sold_copies);
-        ImGui::InputFloat("New Price", &new_price);
+            // Поля для редактирования других данных
+            ImGui::InputText(menufunctional::settings::language == 0 ? "New Name" : U8(u8"Новое имя"), new_name, IM_ARRAYSIZE(new_name));
+            ImGui::InputText(menufunctional::settings::language == 0 ? "New Release Date" : U8(u8"Новая дата выхода"), new_release_date, IM_ARRAYSIZE(new_release_date));
+            ImGui::InputText(menufunctional::settings::language == 0 ? "New Genre" : U8(u8"Новый жанр"), new_genre, IM_ARRAYSIZE(new_genre));
+            ImGui::InputInt(menufunctional::settings::language == 0 ? "New Sold Copies" : U8(u8"Новые проданные экземпляры"), &new_sold_copies);
+            ImGui::InputFloat(menufunctional::settings::language == 0 ? "New Price" : U8(u8"Новая цена"), &new_price);
 
-        if (ImGui::Button("Change id"))
-            Change_id = !Change_id;
-        if (Change_id)
-            ImGui::InputInt("New Game ID", &new_game_id);
+            if (ImGui::Button(menufunctional::settings::language == 0 ? "Change id" : U8(u8"Изменить ИН")))
+                Change_id = !Change_id;
+            if (Change_id)
+                ImGui::InputInt(menufunctional::settings::language == 0 ? "New Game ID" : U8(u8"Новый игровой ИН"), &new_game_id);
 
-        // Кнопка для применения изменений
-        if (ImGui::Button("Update Game")) {
-            // Вызываем функцию RenameGameField с передачей нового ID
-            RenameGameField(
-                game_id_to_rename,  // Текущий ID
-                new_game_id,        // Новый ID (или оставляем -1, если не изменяется)
-                std::string(new_name),
-                std::string(new_release_date),
-                std::string(new_genre),
-                new_sold_copies,
-                new_price
-            );
+            // Кнопка для применения изменений
+            if (ImGui::Button(menufunctional::settings::language == 0 ? "Update Game" : U8(u8"Обновить игру"))) {
+                // Вызываем функцию RenameGameField с передачей нового ID
+                RenameGameField(
+                    game_id_to_rename,  // Текущий ID
+                    new_game_id,        // Новый ID (или оставляем -1, если не изменяется)
+                    std::string(new_name),
+                    std::string(new_release_date),
+                    std::string(new_genre),
+                    new_sold_copies,
+                    new_price
+                );
 
-            // Очистить поля после обновления
-            game_id_to_rename = 0;
-            new_game_id = -1;
-            memset(new_name, 0, sizeof(new_name));
-            memset(new_release_date, 0, sizeof(new_release_date));
-            memset(new_genre, 0, sizeof(new_genre));
-            new_sold_copies = -1;
-            new_price = -1.0f;
+                // Очистить поля после обновления
+                game_id_to_rename = 0;
+                new_game_id = -1;
+                memset(new_name, 0, sizeof(new_name));
+                memset(new_release_date, 0, sizeof(new_release_date));
+                memset(new_genre, 0, sizeof(new_genre));
+                new_sold_copies = -1;
+                new_price = -1.0f;
 
-            ImGui::Text("Game updated successfully!");
+                ImGui::Text(menufunctional::settings::language == 0 ? "Game updated successfully!" : U8(u8"Игра успешно обновлена!"));
+            }
+
+            ImGui::End();
         }
-
-        ImGui::Text("Note: Only fields with new values will be updated.");
-        ImGui::Text("If 'New Game ID' is left as -1, the ID will remain unchanged.");
-
-        ImGui::End();
-   
 }
 
 void render(ImFont* icons_font, ImFont* small_text_font, ImFont* text_font)
 {
-    static bool buttonpress = false;
+    
     ImGui::PushFont(text_font);
     MainStyle();
-    if (islogining && role == "root") {
+    if (menufunctional::login::islogining && menufunctional::role == "root") {
         
 
         ImGui::SetNextWindowSize(ImVec2(500, 300));
         ImGui::Begin("Add Game Main", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking);
-        ImGui::SetCursorPos(ImVec2(250,5));
-        if(ImGui::Button("Open window shop"))
+        if (ImGui::Button(menufunctional::settings::language == 0 ? "Log out account" : U8(u8"Выйти из аккаунта"))) {
+            buttonpress = false;
+            menufunctional::login::islogining = false;
+        }
+        ImGui::SetCursorPos(ImVec2(240,5));
+        if(ImGui::Button(menufunctional::settings::language == 0 ? "Open window shop": U8(u8"Открыть окно магазина")))
             buttonpress = !buttonpress;
         ImGui::SetCursorPos(ImVec2(10, 30));
         Tab(icons_font);
@@ -1640,17 +1760,27 @@ void render(ImFont* icons_font, ImFont* small_text_font, ImFont* text_font)
 
             SysDeleteGame();
 
-            SysRenameGame();
+            SysRenameGame(icons_font);
 
-            SysCheckDate();
+            SysCheckDate(icons_font);
+            if (ImGui::Button(menufunctional::settings::language == 0 ? "Export Games": U8(u8"Экспорт игр"))) {
+                auto games = ReadGames();
+                ExportGamesToCSV(games, "export");
+            }
         }
 
         if (menufunctional::menu_main_button::tab == 2)
         {
             DisplayUsersTable();
-            UserManagementUI();
-            RenderAdminUI();
-            AddUserUI();
+            UserManagementUI(icons_font);
+            RenderAdminUI(icons_font);
+            AddUserUI(icons_font);
+
+            if (ImGui::Button(menufunctional::settings::language == 0 ? "Export Users": U8(u8"Экспорт Пользователей"))) {
+                auto users = GetAllUsers();
+                ExportUsersToCSV(users, "export");
+            }
+
         }
 
         //   DeleteGame();
@@ -1697,18 +1827,18 @@ void render(ImFont* icons_font, ImFont* small_text_font, ImFont* text_font)
 
 
     }
-    else if (islogining && role != "root")
+    else if (menufunctional::login::islogining && menufunctional::role != "root")
     {
-        RenderUI(menufunctional::login::currentUser);
+        RenderUI(menufunctional::login::currentUser, icons_font);
     }
 
 
     if (buttonpress)
     {
-        RenderUI(menufunctional::login::currentUser);
+        RenderUI(menufunctional::login::currentUser, icons_font);
     }
-    if (!islogining)
-        SysPanelRegistrator();
+    if (!menufunctional::login::islogining)
+        SysPanelRegistrator(icons_font);
     ImGui::PopFont();
 }
 
@@ -1783,19 +1913,20 @@ void Setting(ImFont* icons_font)
     ImGui::SetCursorPos(ImVec2(10, 5));
     ImGui::Checkbox(menufunctional::settings::language == 0 ? "Edit color and menu" : U8(u8"Изменить цвет и меню"), &menufunctional::editcolormenu::open);
 
-    ImGui::SetCursorPos(ImVec2(10, 40));
-    ImGui::Checkbox(menufunctional::settings::language == 0 ? "separate excel window" : U8(u8"Отдельное окно вывода"), &menufunctional::settings::separateexcelwindow);
-
+    if (menufunctional::role == "root") {
+        ImGui::SetCursorPos(ImVec2(10, 40));
+        ImGui::Checkbox(menufunctional::settings::language == 0 ? "separate excel window" : U8(u8"Отдельное окно вывода"), &menufunctional::settings::separateexcelwindow);
+    }
     if (menufunctional::editcolormenu::open)
         Color_Menu_Edit();
 
     ImGui::SetCursorPos(ImVec2(10, 75));
     Language();
-
-    ImGui::SetCursorPos(ImVec2(10, 110));
-    ImGui::Text(menufunctional::settings::language == 0 ? "Speed animation: " : U8(u8"Скорость анимации: "));
-    ImGui::SliderFloat("", &menufunctional::animationtab::speedanim, 0.0f, 20.0f, "%.0f", 2.0f);
-
+    if (menufunctional::role == "root") {
+        ImGui::SetCursorPos(ImVec2(10, 110));
+        ImGui::Text(menufunctional::settings::language == 0 ? "Speed animation: " : U8(u8"Скорость анимации: "));
+        ImGui::SliderFloat("", &menufunctional::animationtab::speedanim, 0.0f, 20.0f, "%.0f", 2.0f);
+    }
     ImGui::EndChild();
     ImGui::End();
 }
