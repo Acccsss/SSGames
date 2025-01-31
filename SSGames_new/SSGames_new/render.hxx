@@ -1932,7 +1932,7 @@ void Setting(ImFont* icons_font)
         Color_Menu_Edit();
 
     ImGui::SetCursorPos(ImVec2(10, 75));
-    Language();
+    //Language();
     if (menufunctional::role == "root") {
         ImGui::SetCursorPos(ImVec2(10, 110));
         ImGui::Text(menufunctional::settings::language == 0 ? "Speed animation: " : U8(u8"Скорость анимации: "));
