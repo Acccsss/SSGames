@@ -42,7 +42,7 @@ struct User {
     float balance = 5.0f; // Начальный баланс в $5
 };
 std::vector<User> GetAllUsers();
-void SaveAllUsers(const std::vector<User>&);
+void SaveAllUsers(const std::vector<User>&); // сохранять данные о пользователе
 class Cart {
 public:
     std::vector<Game> items; // Список игр в корзине
@@ -92,26 +92,22 @@ void PurchaseGames(Cart& cart, const std::string& username) {
     });
 
     if (userIt == users.end()) {
-        std::cerr << "User not found!\n";
         return;
     }
 
     float totalPrice = 0.0f;
     for (const auto& game : cart.items) {
         if (IsGamePurchased(game.id, username)) {
-            std::cerr << "Game \"" << game.name << "\" is already purchased!\n";
             continue;
         }
         totalPrice += game.price;
     }
 
     if (totalPrice == 0.0f) {
-        std::cerr << "No new games to purchase.\n";
         return;
     }
 
     if (userIt->balance < totalPrice) {
-        std::cerr << "Insufficient balance!\n";
         return;
     }
 
@@ -119,7 +115,6 @@ void PurchaseGames(Cart& cart, const std::string& username) {
 
     std::ofstream libraryFile(username + "_library.csv", std::ios::app);
     if (!libraryFile.is_open()) {
-        std::cerr << "Error opening library file for user: " << username << "\n";
         return;
     }
 
@@ -128,7 +123,6 @@ void PurchaseGames(Cart& cart, const std::string& username) {
         if (!IsGamePurchased(game.id, username)) {
             // Уменьшаем количество оставшихся копий игры
             if (game.sold_copies == 0) {
-                std::cerr << "No copies available for game \"" << game.name << "\"!\n";
                 continue;
             }
 
@@ -136,7 +130,6 @@ void PurchaseGames(Cart& cart, const std::string& username) {
 
             libraryFile << game.id << "," << game.name << "," << game.release_date << ","
                         << game.genre << "," << game.sold_copies + 1 << "," << game.price << "\n";
-            std::cout << "Game \"" << game.name << "\" purchased successfully.\n";
 
             // Обновляем запись о количестве копий в файле games.csv
             std::ifstream gameFile("games.csv");
@@ -175,7 +168,6 @@ void PurchaseGames(Cart& cart, const std::string& username) {
     libraryFile.close();
     cart.items.clear();
     SaveAllUsers(users);
-    std::cout << "Purchase completed. Remaining balance: $" << userIt->balance << "\n";
 }
 
 // Отображение списка купленных игр
@@ -183,14 +175,18 @@ void DisplayPurchasedGames(const std::string& username) {
     std::ifstream libraryFile(username + "_library.csv");
     if (!libraryFile.is_open()) {
         ImGui::SetNextWindowSize(ImVec2(400, 200));
+        ImGui::PushStyleColor(ImGuiCol_Text,ImVec4(1.0f,1.0f,1.0f,1.0f));
         ImGui::Begin(menufunctional::settings::language == 0 ? "Library" : U8(u8"Библиотека"));
+        ImGui::PopStyleColor();
         ImGui::Text(menufunctional::settings::language == 0 ? "No games purchased yet.": U8(u8"Игры еще не куплены."));
         ImGui::End();
         return;
     }
    // ImGui::SetNextWindowSize(ImVec2(400, 300));
     ImGui::SetNextWindowSize(ImVec2(400, 200));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
     ImGui::Begin(menufunctional::settings::language == 0 ? "Purchased Games":U8(u8"Приобретенные игры"));
+    ImGui::PopStyleColor();
     ImGui::Text(menufunctional::settings::language == 0 ? "Purchased games:":U8(u8"Приобретенные игры:"));
 
     std::string line;
@@ -261,12 +257,14 @@ std::vector<Game> ReadGames() {
     return games;
 }
 static bool buttonpress = false;
-void DisplayGameStore(Cart& cart, ImFont* icons_font) {
+void DisplayGameStore(Cart& cart, ImFont* icons_font) {// показывает игровой магазин
     // Читаем данные из файла
     std::vector<Game> games = ReadGames();
     static bool library_on = false;
     //ImGui::SetNextWindowSize(ImVec2(1200,500));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
     ImGui::Begin(menufunctional::settings::language == 0 ? "Game Store": U8(u8"Игровой магазин"));
+    ImGui::PopStyleColor();
     if (menufunctional::role == "user")
     {
         ImGui::PushFont(icons_font);
@@ -294,6 +292,7 @@ void DisplayGameStore(Cart& cart, ImFont* icons_font) {
     }
     DisplayUserBalance(menufunctional::login::currentUser);
         // Отображаем данные в таблице
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
         if (ImGui::BeginTable(menufunctional::settings::language == 0 ? "GameTable" : U8(u8"Игровой стол") , 7, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable)) {
             // Заголовки таблицы
             ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "ID": U8(u8"ИН"));
@@ -304,7 +303,7 @@ void DisplayGameStore(Cart& cart, ImFont* icons_font) {
             ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Price": U8(u8"Цена"));
             ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Action": U8(u8"Действие"));
             ImGui::TableHeadersRow();
-
+            ImGui::PopStyleColor();
             // Заполняем строки таблицы
             for (const auto& game : games) {
                 ImGui::TableNextRow();
@@ -360,23 +359,25 @@ void DisplayGameStore(Cart& cart, ImFont* icons_font) {
 
 
 
-void DisplayCartInterface(Cart& cart, const std::string& username) {
+void DisplayCartInterface(Cart& cart, const std::string& username) {// показывает корзину покупок
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    ImGui::SetNextWindowSize(ImVec2(700,400));
     ImGui::Begin(menufunctional::settings::language == 0 ? "Shopping Cart" : U8(u8"Корзина покупок"));
-
+    ImGui::PopStyleColor();
     if (cart.items.empty()) {
         ImGui::Text(menufunctional::settings::language == 0 ? "Your cart is empty." :U8(u8"Ваша корзина пуста."));
     }
     else {
         ImGui::Text(menufunctional::settings::language == 0 ? "Games in your cart:" : U8(u8"Игры в вашей корзине:"));
         ImGui::Separator();
-
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
         if (ImGui::BeginTable("CartTable", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
             ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "ID" : U8(u8"ИН"));
             ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Name" : U8(u8"Имя"));
             ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Price" : U8(u8"Цена"));
             ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Action" : U8(u8"Действие"));
             ImGui::TableHeadersRow();
-
+            ImGui::PopStyleColor();
             for (size_t i = 0; i < cart.items.size(); ++i) {
                 const Game& game = cart.items[i];
 
@@ -426,14 +427,13 @@ void DisplayCartInterface(Cart& cart, const std::string& username) {
 
 
 
-std::string GetCurrentDateTime() {
+std::string GetCurrentDateTime() { // показывает время создание игры
     auto now = std::chrono::system_clock::now();
     std::time_t now_time = std::chrono::system_clock::to_time_t(now);
 
     std::tm now_tm = {};
     // Используем localtime_s для безопасного получения времени
     if (localtime_s(&now_tm, &now_time) != 0) {
-        std::cerr << "Error getting local time" << std::endl;
         return "";
     }
 
@@ -442,7 +442,7 @@ std::string GetCurrentDateTime() {
     return oss.str();
 }
 
-int GetNextGameID() {
+int GetNextGameID() { // записывает id игры в таблицу
     std::ifstream file("games.csv");
     int max_id = 0;
     if (file.is_open()) {
@@ -462,7 +462,7 @@ int GetNextGameID() {
     return max_id + 1; // Следующий уникальный ID
 }
 
-void AddGame(const Game& game) {
+void AddGame(const Game& game) { // добавляет игры в таблицу
     const std::string headers = "ID,Name,Release Date,Genre,Sold Copies,Price";
     std::ifstream infile("games.csv");
     bool headersExist = false;
@@ -703,7 +703,9 @@ void SysCheckDate(ImFont* icons_font) {
     static bool CloseCheckDate = false;
     ImGui::Checkbox(menufunctional::settings::language == 0 ? "Check Date" : U8(u8"Проверка даты"),&CloseCheckDate);
     if (CloseCheckDate) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
         ImGui::Begin(menufunctional::settings::language == 0 ? "Check Creation Date" : U8(u8"Проверка даты создания"));
+        ImGui::PopStyleColor();
         ImGui::PushFont(icons_font);
         if (ImGui::Button(ICON_FA_XMARK))
             CloseCheckDate = false;
@@ -723,7 +725,7 @@ void SysCheckDate(ImFont* icons_font) {
 }
 
 
-// Функция для проверки валидности электронной почты
+
 // Проверка наличия заголовков в файле users.csv и добавление, если их нет
 void EnsureUserFileHeaders() {
     const std::string headers = "id,user,password,email,role,balance";
@@ -752,7 +754,7 @@ bool IsValidEmail(const std::string& email) {
     const std::regex pattern(R"((\w+)(\.\|_)?(\w*)@(\w+)(\.(\w+))+)");
     return std::regex_match(email, pattern);
 }
-
+// Функция для проверки пользователя
 bool IsUserOrEmailExists(const std::string& username, const std::string& email) {
     std::ifstream infile("users.csv");
     std::string line;
@@ -775,7 +777,7 @@ bool IsUserOrEmailExists(const std::string& username, const std::string& email) 
 
     return false; // Совпадений нет
 }
-
+// Функция для сохранения информации о нём
 void SaveUserData(const std::string& username, const std::string& password, const std::string& email) {
     EnsureUserFileHeaders();
 
@@ -868,13 +870,7 @@ std::string GetUserRole(const std::string& username) {
     return "Role not found";
 }
 
-
-
-
-
-
-
-
+// Отрисовка логина
 void RenderLoginUI(bool& showRegistration,ImFont* icons_font) {
     static char loginUsername[128] = "";
     static char loginPassword[128] = "";
@@ -914,7 +910,7 @@ void RenderLoginUI(bool& showRegistration,ImFont* icons_font) {
     //ImGui::End();
 }
 
-
+// Отрисовка регистрации
 void RenderRegistrationUI(bool& showRegistration) {
     static char username[128] = "";
     static char password[128] = "";
@@ -958,6 +954,7 @@ void RenderRegistrationUI(bool& showRegistration) {
     //ImGui::End();
 }
 
+// Изменить роль пользователя
 bool ChangeUserRole(const std::string& username, const std::string& newRole) {
     std::ifstream infile("users.csv");
     std::vector<std::string> lines;
@@ -1012,7 +1009,7 @@ bool ChangeUserRole(const std::string& username, const std::string& newRole) {
     return false; // Не удалось изменить роль
 }
 
-
+// Отрисовка для изменения роли
 void RenderAdminUI(ImFont* icons_font) {
     static char username[128] = "";
     static std::string message;
@@ -1024,7 +1021,9 @@ void RenderAdminUI(ImFont* icons_font) {
     const char* roles[] = { "user", "root" };
     ImGui::Checkbox(menufunctional::settings::language == 0 ? "Change Role" : U8(u8"Изменить роль"),&changerole);
     if (changerole) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
         ImGui::Begin(menufunctional::settings::language == 0 ? "Role" : U8(u8"Роль"));
+        ImGui::PopStyleColor();
         ImGui::PushFont(icons_font);
         if (ImGui::Button(ICON_FA_XMARK))
             changerole = false;
@@ -1065,12 +1064,14 @@ void RenderAdminUI(ImFont* icons_font) {
 }
 
 
-
+// Отрисовка регистрации и логина
 void SysPanelRegistrator(ImFont* icons_font)
 {
     static bool showRegistration = false;
     ImGui::SetNextWindowSize(ImVec2(400,300));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
     ImGui::Begin("SSGAMES");
+    ImGui::PopStyleColor();
     if (showRegistration) {
         RenderRegistrationUI(showRegistration);
     }
@@ -1280,7 +1281,9 @@ void AddUserUI(ImFont* icons_font) {
     static bool CloseAddUserWindow = false;
     ImGui::Checkbox(menufunctional::settings::language == 0 ? "Add User" : U8(u8"Добавить пользователя"),&CloseAddUserWindow);
     if (CloseAddUserWindow) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
         ImGui::Begin(menufunctional::settings::language == 0 ? "Add New User" : U8(u8"Добавить нового пользователя"));
+        ImGui::PopStyleColor();
         ImGui::PushFont(icons_font);
         if (ImGui::Button(ICON_FA_XMARK))
             CloseAddUserWindow = false;
@@ -1355,7 +1358,7 @@ bool UpdateUser(int id, const std::string& username, const std::string& password
 
 
 
-// Функция для отображения UI в ImGui
+// Функция для отображения управление пользователями в ImGui
 void UserManagementUI(ImFont* icons_font) {
     static char inputId[10] = "";
     static char username[128] = "";
@@ -1368,7 +1371,9 @@ void UserManagementUI(ImFont* icons_font) {
     static bool UserManagement = false;
     ImGui::Checkbox(menufunctional::settings::language == 0 ? "User Management" : U8(u8"Управление пользователями"),&UserManagement);
     if (UserManagement) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
         ImGui::Begin(menufunctional::settings::language == 0 ? "User Management" : U8(u8"Управление пользователями"));
+        ImGui::PopStyleColor();
         ImGui::PushFont(icons_font);
         if (ImGui::Button(ICON_FA_XMARK))
             UserManagement = false;
@@ -1439,13 +1444,15 @@ void UserManagementUI(ImFont* icons_font) {
     }
 }
 
-
+// Вывод таблицы пользователей
 void DisplayUsersTable() {
     // Читаем данные пользователей из файла
     std::vector<User> users = GetAllUsers();
 
     // Отображаем данные в таблице
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
     if (ImGui::BeginTable("UsersTable", 6, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable)) {
+       
         // Заголовки таблицы
         ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "ID": U8(u8"ИН"));
         ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Username":U8(u8"Имя пользователя"));
@@ -1454,7 +1461,7 @@ void DisplayUsersTable() {
         ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Role": U8(u8"Роль"));
         ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Balance": U8(u8"Баланс"));
         ImGui::TableHeadersRow();
-
+        ImGui::PopStyleColor();
         // Заполняем строки таблицы
         for (const auto& user : users) {
             ImGui::TableNextRow();
@@ -1483,16 +1490,19 @@ void DisplayUsersTable() {
 }
 
 
-
+// Отображает в таблице игры
 void DisplayTable() {
     // Читаем данные из файла
     std::vector<Game> games = ReadGames();
 
     if (menufunctional::settings::separateexcelwindow) {
         ImGui::SetNextWindowSize(ImVec2(500,300));
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
         ImGui::Begin("GameTable");
+        ImGui::PopStyleColor();
     }
     // Отображаем данные в таблице
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
     if (ImGui::BeginTable("GameTable", 6, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable)) {
         // Заголовки таблицы
         ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "ID": U8(u8"ИН"));
@@ -1502,6 +1512,7 @@ void DisplayTable() {
         ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Sold Copies": U8(u8"Проданные копии"));
         ImGui::TableSetupColumn(menufunctional::settings::language == 0 ? "Price": U8(u8"Цена"));
         ImGui::TableHeadersRow();
+        ImGui::PopStyleColor();
 
         // Заполняем строки таблицы
         for (const auto& game : games) {
@@ -1672,7 +1683,9 @@ void SysRenameGame(ImFont* icons_font)
 
         if (CloseRenameGame) {
             ImGui::SetNextWindowSize(ImVec2(650,300));
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
             ImGui::Begin(menufunctional::settings::language == 0 ? "Rename Game" : U8(u8"Переименовать игру"));
+            ImGui::PopStyleColor();
             ImGui::PushFont(icons_font);
             if (ImGui::Button(ICON_FA_XMARK))
                 CloseRenameGame = false;
@@ -1727,7 +1740,7 @@ void SysRenameGame(ImFont* icons_font)
             ImGui::End();
         }
 }
-
+// основная функция для отрисовки
 void render(ImFont* icons_font, ImFont* small_text_font, ImFont* text_font)
 {
     
@@ -1818,8 +1831,6 @@ void render(ImFont* icons_font, ImFont* small_text_font, ImFont* text_font)
             Info(icons_font);
 
         ImGui::PushFont(small_text_font);
-        ImGui::SetCursorPos(ImVec2(420, 280));
-        ImGui::Text("Debug ~ V2.1");
         ImGui::PopFont();
 
         ImGui::End();

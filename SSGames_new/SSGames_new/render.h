@@ -123,7 +123,7 @@ namespace menufunctional
 //    std::string name;
 //};
 
-inline void MainStyle()
+inline void MainStyle() // Установить цвет
 {
     ImGuiStyle& style = ImGui::GetStyle();
 
@@ -149,7 +149,7 @@ inline void MainStyle()
 //    ImGui::SetNextWindowPos(ImVec2(window->Pos.x - window->Size.x / (ImGui::GetStyle().WindowPadding.x) + posx, window->Pos.y + posy));
 //}
 
-void Language() {
+void Language() { // изменить язык
 
     //ImGui::Combo(menufunctional::settings::language == 0 ? "Select Language": "Выберите язык", &menufunctional::settings::language, menufunc::langue::languages, IM_ARRAYSIZE(menufunc::langue::languages));
     if (ImGui::Button(menufunctional::settings::language == 0 ? "Choose a language" : U8(u8"Выбрать язык"))) {
@@ -184,7 +184,7 @@ void Language() {
 }
 
 
-void UpdateLoadingState() {
+void UpdateLoadingState() {// обновления загрузки
    
     if (menufunctional::menu_main_button::loading) {
        
